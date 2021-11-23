@@ -1,12 +1,17 @@
 package Server;
 
-import Common.Messages.DateMessage;
-import Common.Messages.Message;
-import Common.Messages.TextMessage;
+import Common.Messages.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
 public class FirstServerHandler extends SimpleChannelInboundHandler<Message> {
+    private static final String FILE_NAME = "file";
+    private static final int BUFFER_SIZE = 1024 * 64;
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
 
@@ -24,6 +29,34 @@ public class FirstServerHandler extends SimpleChannelInboundHandler<Message> {
             DateMessage message = (DateMessage) msg;
             System.out.println("incoming date message: " + message.getDate());
             ctx.writeAndFlush(msg);
+        }
+
+        if (msg instanceof RequestFileMessage) {
+            try (RandomAccessFile randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
+                final long fileLenght = randomAccessFile.length();
+                do {
+                    var position = randomAccessFile.getFilePointer();
+                    long avialableBytes = fileLenght - position;
+                    byte[] bytes;
+                    if (avialableBytes >= BUFFER_SIZE) {
+                        bytes = new byte[BUFFER_SIZE];
+                    } else {
+                        bytes = new byte[ (int) avialableBytes];
+                    }
+                    randomAccessFile.read(bytes);
+
+                    FileTransferMessage message = new FileTransferMessage();
+                    message.setContent(bytes);
+                    message.setStartPosition(position);
+                    ctx.writeAndFlush(message);
+
+
+                } while (randomAccessFile.getFilePointer() < fileLenght);
+
+                ctx.writeAndFlush(new EndFileTransferMessage());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

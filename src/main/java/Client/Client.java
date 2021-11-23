@@ -2,9 +2,7 @@ package Client;
 
 import Common.Handler.JsonDecoder;
 import Common.Handler.JsonEncoder;
-import Common.Messages.DateMessage;
-import Common.Messages.Message;
-import Common.Messages.TextMessage;
+import Common.Messages.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -13,6 +11,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -40,7 +41,22 @@ public class Client {
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-                                            System.out.println("receive msg " + msg);
+                                            if (msg instanceof TextMessage) {
+                                                System.out.println("receive msg " + ((TextMessage) msg).getText());
+                                            }
+                                            if (msg instanceof FileTransferMessage) {
+                                                var message = (FileTransferMessage) msg;
+                                                try (RandomAccessFile rw = new RandomAccessFile("1", "rw")) {
+                                                    rw.seek(message.getStartPosition());
+                                                    rw.write(message.getContent());
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                            if (msg instanceof EndFileTransferMessage) {
+                                                System.out.println("File transfer is finished");
+                                                ctx.close();
+                                            }
                                         }
                                     }
                             );
