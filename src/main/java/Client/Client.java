@@ -11,13 +11,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 public class Client {
+    private static int i = 0;       // счетчик переданных пакетов
+
     public static void main(String[] args) throws InterruptedException {
         new Client().start();
     }
@@ -41,11 +40,9 @@ public class Client {
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-                                            if (msg instanceof TextMessage) {
-                                                System.out.println("receive msg " + ((TextMessage) msg).getText());
-                                            }
+                                            System.out.println("Новый входящий пакет файла - " + (i++));
                                             if (msg instanceof FileTransferMessage) {
-                                                var message = (FileTransferMessage) msg;
+                                                FileTransferMessage message = (FileTransferMessage) msg;
                                                 try (RandomAccessFile rw = new RandomAccessFile("1", "rw")) {
                                                     rw.seek(message.getStartPosition());
                                                     rw.write(message.getContent());
@@ -54,7 +51,7 @@ public class Client {
                                                 }
                                             }
                                             if (msg instanceof EndFileTransferMessage) {
-                                                System.out.println("File transfer is finished");
+                                                System.out.println("Передача файла закончена");
                                                 ctx.close();
                                             }
                                         }
@@ -66,23 +63,8 @@ public class Client {
             System.out.println("Client started");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            while (channelFuture.channel().isActive()) {
-                TextMessage textMessage = new TextMessage();
-                textMessage.setText(String.format("[%s] %s", LocalDateTime.now(), Thread.currentThread().getName()));
-                System.out.println("Try to send message: " + textMessage);
-
-                channelFuture.channel().writeAndFlush(textMessage);
-                DateMessage dateMessage = new DateMessage();
-                dateMessage.setDate(new Date());
-                channelFuture.channel().write(dateMessage);
-                channelFuture.channel().flush();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
+            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
