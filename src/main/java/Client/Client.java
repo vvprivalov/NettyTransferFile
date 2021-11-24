@@ -60,7 +60,7 @@ public class Client {
                         }
                     });
 
-            System.out.println("Client started");
+            System.out.println("Клиент запущен");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
             channelFuture.channel().writeAndFlush(new RequestFileMessage());
