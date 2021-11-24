@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.concurrent.Executor;
 
 public class FirstServerHandler extends SimpleChannelInboundHandler<Message> {
-    private static final String FILE_NAME = "file";
+    private static final String FILE_NAME = "file.pdf";
     private static final int BUFFER_SIZE = 1024 * 64;
     private final Executor executor;
 

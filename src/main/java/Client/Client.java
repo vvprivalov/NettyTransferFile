@@ -43,7 +43,7 @@ public class Client {
                                             System.out.println("Новый входящий пакет файла - " + (i++));
                                             if (msg instanceof FileTransferMessage) {
                                                 FileTransferMessage message = (FileTransferMessage) msg;
-                                                try (RandomAccessFile rw = new RandomAccessFile("1", "rw")) {
+                                                try (RandomAccessFile rw = new RandomAccessFile("1.pdf", "rw")) {
                                                     rw.seek(message.getStartPosition());
                                                     rw.write(message.getContent());
                                                 } catch (IOException e) {
