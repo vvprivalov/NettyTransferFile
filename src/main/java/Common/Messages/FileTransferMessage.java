@@ -3,6 +3,15 @@ package Common.Messages;
 public class FileTransferMessage extends Message {
     private byte[] content;
     private long startPosition;
+    private boolean last;
+
+    public boolean isLast() {
+        return last;
+    }
+
+    public void setLast(boolean last) {
+        this.last = last;
+    }
 
     public byte[] getContent() {
 

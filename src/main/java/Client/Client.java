@@ -49,10 +49,10 @@ public class Client {
                                                 } catch (IOException e) {
                                                     e.printStackTrace();
                                                 }
-                                            }
-                                            if (msg instanceof EndFileTransferMessage) {
-                                                System.out.println("Передача файла закончена");
-                                                ctx.close();
+                                                if (message.isLast()) {
+                                                    System.out.println("Передача файла закончена");
+                                                    ctx.close();
+                                                }
                                             }
                                         }
                                     }
@@ -63,7 +63,9 @@ public class Client {
             System.out.println("Клиент запущен");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            RequestFileMessage rfm = new RequestFileMessage();
+            rfm.setPath("file.pdf");
+            channelFuture.channel().writeAndFlush(rfm);
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
